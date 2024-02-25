@@ -51,7 +51,7 @@ namespace DriftingGame
 
             // Create a new player object with the rectangle texture
             playerTexture = Content.Load<Texture2D>("SportsCar");
-            player = new Player(playerTexture, 0, 0, 64, 128, 64, 128, 0.3f, 0.003f);
+            player = new Player(playerTexture, 0, 0, 64, 128, 64, 128, 0.4f, 0.003f);
         }
 
         protected override void Update(GameTime gameTime)
