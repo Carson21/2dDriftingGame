@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -12,11 +13,13 @@ namespace DriftingGame
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
 
-        private Camera camera;
-        private KeyboardState keyboardState;
+        private Camera _camera;
+        private RenderTarget2D _renderTarget;
+        private Rectangle _renderRectangle;
+        private KeyboardState _keyboardState;
 
-        private Texture2D playerTexture;
-        private Player player;
+        private Texture2D _playerTexture;
+        private Player _player;
 
 
         public DriftingGame()
@@ -36,13 +39,37 @@ namespace DriftingGame
             _graphics.IsFullScreen = false;
             _graphics.ApplyChanges();
 
-            // Disable window resizing
-            Window.AllowUserResizing = false;
+            // Allow window resizing and recalculate the render rectangle when the window size changes
+            Window.AllowUserResizing = true;
+            Window.ClientSizeChanged += (sender, args) => {
+                if (Window.ClientBounds.Width > 0 && Window.ClientBounds.Height > 0)
+                {
+                    CalculateRenderRectangle();
+                }
+            };
 
-            // Initialize your camera with the game viewport
-            camera = new Camera();
+            // Initialize the render target and calculate the render rectangle
+            _renderTarget = new RenderTarget2D(GraphicsDevice, SCREEN_WIDTH, SCREEN_HEIGHT);
+            CalculateRenderRectangle();
+
+            // Initialize the camera
+            _camera = new Camera();
 
             base.Initialize();
+        }
+
+        private void CalculateRenderRectangle()
+        {
+            Point windowSize = GraphicsDevice.Viewport.Bounds.Size;
+
+            float scaleX = (float)windowSize.X / _renderTarget.Width;
+            float scaleY = (float)windowSize.Y / _renderTarget.Height;
+            float scale = Math.Min(scaleX, scaleY);
+
+            _renderRectangle.Width = (int)(_renderTarget.Width * scale);
+            _renderRectangle.Height = (int)(_renderTarget.Height * scale);
+            _renderRectangle.X = (windowSize.X - _renderRectangle.Width) / 2;
+            _renderRectangle.Y = (windowSize.Y - _renderRectangle.Height) / 2;
         }
 
         protected override void LoadContent()
@@ -50,33 +77,42 @@ namespace DriftingGame
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
             // Create a new player object with the rectangle texture
-            playerTexture = Content.Load<Texture2D>("SportsCar");
-            player = new Player(playerTexture, 0, 0, 64, 128, 64, 128, 0.3f, 0.003f);
+            _playerTexture = Content.Load<Texture2D>("SportsCar");
+            _player = new Player(_playerTexture, 0, 0, 64, 128, 64, 128, 0.3f, 0.003f);
         }
 
         protected override void Update(GameTime gameTime)
         {
-            keyboardState = Keyboard.GetState();
+            _keyboardState = Keyboard.GetState();
 
-            if (keyboardState.IsKeyDown(Keys.Escape))
+            if (_keyboardState.IsKeyDown(Keys.Escape))
                 Exit();
 
-            player.Update(gameTime, keyboardState);
+            _player.Update(gameTime, _keyboardState);
 
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
+            // Set the render target to the render target we created
+            GraphicsDevice.SetRenderTarget(_renderTarget);
             GraphicsDevice.Clear(Color.CadetBlue);
 
-            // Begin drawing with the camera's transform matrix and a point clamp sampler state for pixel art
-            _spriteBatch.Begin(transformMatrix: camera.Transform, samplerState: SamplerState.PointClamp);
-            
-            player.Draw(_spriteBatch);
+            // Begin drawing with the camera's transform matrix and a point clamp sampler state for pixel art.
+            // Always draw in between the Begin and End calls.
+            _spriteBatch.Begin(transformMatrix: _camera.Transform, samplerState: SamplerState.PointClamp);
+
+            _player.Draw(_spriteBatch);
 
             _spriteBatch.End();
 
+
+            // Target the back buffer and draw the render target
+            GraphicsDevice.SetRenderTarget(null);
+            _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+            _spriteBatch.Draw(_renderTarget, _renderRectangle, Color.White);
+            _spriteBatch.End();
             base.Draw(gameTime);
         }
     }

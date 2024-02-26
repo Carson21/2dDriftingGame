@@ -9,6 +9,7 @@ namespace DriftingGame
 {
     internal class Player : IGameObject
     {
+        // IGameObject properties
         public Texture2D Texture { get; }
         public float X { get; private set; }
         public float Y { get; private set; }
@@ -19,14 +20,19 @@ namespace DriftingGame
         public Color Color { get; }
         public SpriteEffects SpriteEffect { get; }
             
+        // Player properties
         public float Speed { get; private set; }
         public float RotationSpeed { get; private set; }
         public int Frame { get; private set; }
         public int FrameWidth { get; }
         public int FrameHeight { get; }
 
+        // Player private fields
+
+
         public Player(Texture2D texture, float x, float y, int width, int height, int frameWidth, int frameHeight, float speed, float rotationSpeed) 
         {
+            // IGameObject properties
             Texture = texture;
             X = x;
             Y = y;
@@ -37,6 +43,7 @@ namespace DriftingGame
             Color = Color.White;
             SpriteEffect = SpriteEffects.None;
 
+            // Player properties
             Frame = 0;
             FrameWidth = frameWidth;
             FrameHeight = frameHeight;
